@@ -1,0 +1,20 @@
+{
+  "name": "75-hard-custom",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "db:generate": "npx prisma generate",
+    "db:migrate": "npx prisma migrate dev",
+    "db:seed": "cd server && npx prisma db seed",
+    "db:studio": "npx prisma studio"
+  },
+  "devDependencies": {
+    "dotenv": "^17.3.1",
+    "prisma": "^7.6.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.6.0"
+  }
+}

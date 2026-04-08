@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0e0e0e;
+  --color-surface: #131313;
+  --color-surface-high: #1a1919;
+  --color-surface-higher: #201f1f;
+  --color-surface-highest: #262626;
+
+  --color-primary: #f4ffc6;
+  --color-primary-container: #d1fc00;
+  --color-secondary: #ff734a;
+  --color-tertiary: #81ecff;
+  --color-error: #ff7351;
+
+  --color-on-surface: #ffffff;
+  --color-on-surface-variant: #adaaaa;
+  --color-outline: #767575;
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+}
+
+:root {
+  --glass-bg: rgba(26, 25, 25, 0.7);
+  --glass-blur: blur(20px);
+  --obsidian-glow: 0 0 40px rgba(244, 255, 198, 0.08);
+  --performance-gradient: linear-gradient(135deg, #f4ffc6 0%, #3e4c00 100%);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: #0e0e0e;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Utility classes */
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.obsidian-glow {
+  box-shadow: var(--obsidian-glow);
+}
+
+.performance-gradient {
+  background: var(--performance-gradient);
+}
+
+.label-text {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+}
+
+/* Material Symbols config */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24;
+}

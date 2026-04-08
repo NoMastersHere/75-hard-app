@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../server/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  password    String
+  name        String?
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime      @default(now())
+  challenges  Challenge[]
+  dayLogs     DayLog[]
+  settings    UserSettings?
+}
+
+model Challenge {
+  id            String   @id @default(cuid())
+  userId        String
+  startDate     DateTime
+  currentDay    Int      @default(0)
+  status        String   @default("active") // active, completed, failed
+  completedDays Int      @default(0)
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayLogs       DayLog[]
+
+  @@index([userId])
+}
+
+model DayLog {
+  id               String    @id @default(cuid())
+  challengeId      String
+  userId           String
+  dayNumber        Int
+  date             DateTime  @db.Date
+  workout1Complete Boolean   @default(false)
+  workout1Type     String?
+  workout1Duration Int?
+  workout1Notes    String?
+  workout2Complete Boolean   @default(false)
+  workout2Type     String?
+  workout2Duration Int?
+  workout2Notes    String?
+  waterIntake      Float     @default(0)
+  waterComplete    Boolean   @default(false)
+  pagesRead        Int       @default(0)
+  readingComplete  Boolean   @default(false)
+  bookTitle        String?
+  dietCompliant    Boolean   @default(false)
+  progressPhotoUrl String?
+  allTasksComplete Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  challenge        Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, date])
+  @@index([userId])
+}
+
+model UserSettings {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  workoutDuration   Int     @default(45)
+  hydrationGoal     Float   @default(1.0)
+  readingGoal       Int     @default(10)
+  dietConstraint    String?
+  reminderTasks     Boolean @default(true)
+  reminderHydration Boolean @default(true)
+  reminderPhoto     Boolean @default(false)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
