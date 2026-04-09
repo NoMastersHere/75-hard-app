@@ -233,10 +233,10 @@ export default function DashboardPage() {
             <div className="relative inline-flex items-center justify-center">
               <ProgressRing percentage={percentage} size={180} strokeWidth={8} showLabel={false} />
               <div className="absolute flex flex-col items-center leading-tight">
-                <span className="font-display font-black text-primary text-base leading-none">
+                <span className="font-display font-black text-primary text-sm leading-none">
                   DAY {dayNumber}
                 </span>
-                <span className="font-display font-black text-primary text-2xl leading-none mt-0.5">
+                <span className="font-display font-black text-primary text-xl leading-none mt-0.5">
                   {Math.round(percentage)}%
                 </span>
                 <span className="text-on-surface-variant text-xs mt-0.5">/{totalDays}</span>
