@@ -15,11 +15,5 @@
     "db:seed": "cd server && npx prisma db seed",
     "db:studio": "npx prisma studio"
   },
-  "devDependencies": {
-    "dotenv": "^17.3.1",
-    "prisma": "^7.6.0"
-  },
-  "dependencies": {
-    "@prisma/client": "^7.6.0"
-  }
+  "dependencies": {}
 }
