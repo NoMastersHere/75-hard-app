@@ -2,8 +2,11 @@ const express = require('express');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Resend } = require('resend');
 const { authenticate } = require('../middleware/auth');
 const prisma = require('../services/db');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const router = express.Router();
 
@@ -152,11 +155,42 @@ router.post('/forgot-password', async (req, res, next) => {
       data: { passwordResetToken: token, passwordResetExpires: expires },
     });
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const clientUrl = process.env.CLIENT_URL || 'https://75hard.lanirose.com';
     const resetUrl = `${clientUrl}/reset-password?token=${token}`;
 
-    // TODO: wire up email service (Resend, nodemailer, etc.)
-    console.log(`[PASSWORD RESET] ${email} → ${resetUrl}`);
+    try {
+      await resend.emails.send({
+        from: '75 Hard <noreply@nomasters.biz>',
+        to: email,
+        subject: 'Reset your 75 Hard password',
+        html: `
+          <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 480px; margin: 0 auto; background: #1a1a1a; border-radius: 12px; overflow: hidden;">
+            <div style="padding: 40px 32px; text-align: center;">
+              <h1 style="color: #ffffff; font-size: 24px; font-weight: 700; margin: 0 0 8px;">75 HARD</h1>
+              <p style="color: #888888; font-size: 13px; margin: 0; letter-spacing: 2px;">STAY THE COURSE</p>
+            </div>
+            <div style="padding: 0 32px 40px;">
+              <p style="color: #cccccc; font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+                You requested a password reset. Click the button below to choose a new password. This link expires in 1 hour.
+              </p>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${resetUrl}" style="display: inline-block; background: #ffffff; color: #1a1a1a; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                  Reset Password
+                </a>
+              </div>
+              <p style="color: #666666; font-size: 13px; line-height: 1.5; margin: 24px 0 0;">
+                If you didn't request this, you can safely ignore this email. Your password won't change.
+              </p>
+            </div>
+            <div style="padding: 20px 32px; border-top: 1px solid #2a2a2a; text-align: center;">
+              <p style="color: #555555; font-size: 12px; margin: 0;">75 Hard Tracker &mdash; No Masters</p>
+            </div>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('[PASSWORD RESET] Failed to send email:', emailErr.message);
+    }
 
     res.json({ success: true, data: { message: 'If that email exists, a reset link has been sent.' } });
   } catch (err) {
