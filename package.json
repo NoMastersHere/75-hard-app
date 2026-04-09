@@ -2,8 +2,11 @@
   "name": "75-hard-custom",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "build": "cd client && npm install && npm run build && cd ../server && npm install && cd .. && npx prisma generate",
+    "build": "cd client && npm install && npm run build && cd ../server && npm install && npx prisma generate",
     "start": "cd server && node index.js",
     "dev:client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
