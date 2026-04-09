@@ -30,6 +30,7 @@ router.get('/', async (req, res, next) => {
 router.put('/', async (req, res, next) => {
   try {
     const {
+      challengeDays,
       workoutDuration,
       hydrationGoal,
       readingGoal,
@@ -40,6 +41,7 @@ router.put('/', async (req, res, next) => {
     } = req.body;
 
     const data = {};
+    if (challengeDays !== undefined) data.challengeDays = Math.min(365, Math.max(1, parseInt(challengeDays, 10)));
     if (workoutDuration !== undefined) data.workoutDuration = parseInt(workoutDuration, 10);
     if (hydrationGoal !== undefined) data.hydrationGoal = parseFloat(hydrationGoal);
     if (readingGoal !== undefined) data.readingGoal = parseInt(readingGoal, 10);

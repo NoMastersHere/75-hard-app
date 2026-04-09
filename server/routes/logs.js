@@ -124,9 +124,13 @@ router.post('/today', async (req, res, next) => {
 
     // If newly completed (wasn't complete before, now is), update challenge
     if (allTasksComplete && !wasAlreadyComplete) {
+      const userSettings = await prisma.userSettings.findUnique({
+        where: { userId: req.user.id },
+      });
+      const targetDays = userSettings?.challengeDays || 75;
       const newCompletedDays = challenge.completedDays + 1;
       const newCurrentDay = challenge.currentDay + 1;
-      const newStatus = newCompletedDays >= 75 ? 'completed' : 'active';
+      const newStatus = newCompletedDays >= targetDays ? 'completed' : 'active';
 
       await prisma.challenge.update({
         where: { id: challenge.id },
