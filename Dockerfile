@@ -9,7 +9,7 @@ COPY . .
 RUN cd client && npm install --include=optional --force && npm run build
 
 # Install server deps and generate Prisma client
-RUN cd server && npm install && npx prisma generate
+RUN cd server && npm install && npx prisma generate --schema=../prisma/schema.prisma
 
 # Production stage
 FROM node:22.14-slim
@@ -19,6 +19,7 @@ WORKDIR /app
 # Copy built client and server
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/server ./server
+COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 3000
 
