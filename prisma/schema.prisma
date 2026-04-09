@@ -71,7 +71,7 @@ model UserSettings {
   userId            String  @unique
   challengeDays     Int     @default(75)
   workoutDuration   Int     @default(45)
-  hydrationGoal     Float   @default(1.0)
+  hydrationGoalCups Int     @default(12)
   readingGoal       Int     @default(10)
   dietConstraint    String?
   reminderTasks     Boolean @default(true)

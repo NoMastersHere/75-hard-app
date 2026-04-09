@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -77,7 +77,7 @@ export default function SettingsPage() {
   // Local settings state
   const [challengeDays, setChallengeDays] = useState(75);
   const [workoutDuration, setWorkoutDuration] = useState(45);
-  const [hydrationGoal, setHydrationGoal] = useState(1);
+  const [hydrationGoalCups, setHydrationGoalCups] = useState(12);
   const [readingPages, setReadingPages] = useState(10);
   const [dietType, setDietType] = useState('Standard');
 
@@ -89,8 +89,9 @@ export default function SettingsPage() {
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState(false);
-
-  const debounceRef = useRef(null);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   // Load data on mount
   useEffect(() => {
@@ -103,59 +104,54 @@ export default function SettingsPage() {
     if (!settings) return;
     if (settings.challengeDays != null) setChallengeDays(settings.challengeDays);
     if (settings.workoutDuration != null) setWorkoutDuration(settings.workoutDuration);
-    if (settings.hydrationGoal != null) setHydrationGoal(settings.hydrationGoal);
+    // Support both old hydrationGoal (gallons) and new hydrationGoalCups
+    if (settings.hydrationGoalCups != null) {
+      setHydrationGoalCups(settings.hydrationGoalCups);
+    } else if (settings.hydrationGoal != null) {
+      setHydrationGoalCups(Math.round(settings.hydrationGoal * 16));
+    }
     if (settings.readingGoal != null) setReadingPages(settings.readingGoal);
     if (settings.dietConstraint) setDietType(settings.dietConstraint);
     if (settings.reminderTasks != null) setNotifTasks(settings.reminderTasks);
     if (settings.reminderHydration != null) setNotifHydration(settings.reminderHydration);
     if (settings.reminderPhoto != null) setNotifPhoto(settings.reminderPhoto);
+    setDirty(false);
   }, [settings]);
 
-  // Debounced auto-save
-  const autoSave = useCallback(
-    (updates) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        updateSettings(updates).catch(() => {});
-      }, 800);
-    },
-    [updateSettings]
-  );
+  // Dirty tracking — mark as changed when user adjusts anything
+  const markDirty = () => { setDirty(true); setSaveSuccess(false); };
 
-  const handleChallengeDays = (v) => {
-    setChallengeDays(v);
-    autoSave({ challengeDays: v });
-  };
-  const handleWorkoutDuration = (v) => {
-    setWorkoutDuration(v);
-    autoSave({ workoutDuration: v });
-  };
-  const handleHydrationGoal = (v) => {
-    setHydrationGoal(v);
-    autoSave({ hydrationGoal: v });
-  };
-  const handleReadingPages = (v) => {
-    setReadingPages(v);
-    autoSave({ readingGoal: v });
-  };
-  const handleDietType = (v) => {
-    setDietType(v);
-    autoSave({ dietConstraint: v });
-  };
-  const handleNotifTasks = () => {
-    const next = !notifTasks;
-    setNotifTasks(next);
-    autoSave({ reminderTasks: next });
-  };
-  const handleNotifHydration = () => {
-    const next = !notifHydration;
-    setNotifHydration(next);
-    autoSave({ reminderHydration: next });
-  };
-  const handleNotifPhoto = () => {
-    const next = !notifPhoto;
-    setNotifPhoto(next);
-    autoSave({ reminderPhoto: next });
+  const handleChallengeDays = (v) => { setChallengeDays(v); markDirty(); };
+  const handleWorkoutDuration = (v) => { setWorkoutDuration(v); markDirty(); };
+  const handleHydrationGoalCups = (v) => { setHydrationGoalCups(v); markDirty(); };
+  const handleReadingPages = (v) => { setReadingPages(v); markDirty(); };
+  const handleDietType = (v) => { setDietType(v); markDirty(); };
+  const handleNotifTasks = () => { setNotifTasks((p) => !p); markDirty(); };
+  const handleNotifHydration = () => { setNotifHydration((p) => !p); markDirty(); };
+  const handleNotifPhoto = () => { setNotifPhoto((p) => !p); markDirty(); };
+
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    setSaveSuccess(false);
+    try {
+      await updateSettings({
+        challengeDays,
+        workoutDuration,
+        hydrationGoalCups,
+        readingGoal: readingPages,
+        dietConstraint: dietType,
+        reminderTasks: notifTasks,
+        reminderHydration: notifHydration,
+        reminderPhoto: notifPhoto,
+      });
+      setDirty(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch {
+      // error handled by store
+    } finally {
+      setSaving(false);
+    }
   };
 
   const activeChallenge = challenge || challenges?.find((c) => c.status === 'active');
@@ -290,15 +286,15 @@ export default function SettingsPage() {
           <div className="bg-surface-higher rounded-lg p-4 flex items-center justify-between">
             <div>
               <p className="text-on-surface text-sm font-semibold">Hydration Goal</p>
-              <p className="text-on-surface-variant text-xs mt-0.5">Daily water target</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Daily water target in cups</p>
             </div>
             <Stepper
-              value={hydrationGoal}
-              onChange={handleHydrationGoal}
-              min={0.5}
-              max={2}
-              step={0.25}
-              unit="gal"
+              value={hydrationGoalCups}
+              onChange={handleHydrationGoalCups}
+              min={1}
+              max={32}
+              step={1}
+              unit="cups"
             />
           </div>
 
@@ -371,6 +367,40 @@ export default function SettingsPage() {
             </div>
             <ToggleSwitch active={notifPhoto} onToggle={handleNotifPhoto} />
           </div>
+        </motion.div>
+
+        {/* Save Button */}
+        <motion.div variants={fadeUp}>
+          <button
+            type="button"
+            onClick={handleSaveSettings}
+            disabled={saving || !dirty}
+            className={`w-full py-3.5 rounded-lg font-display font-bold text-sm uppercase tracking-wider transition-all ${
+              dirty
+                ? 'bg-primary text-bg hover:opacity-90'
+                : saveSuccess
+                ? 'bg-primary/20 text-primary border border-primary/30'
+                : 'bg-surface-higher text-on-surface-variant border border-outline/30'
+            } disabled:opacity-50`}
+          >
+            {saving ? (
+              <span className="material-symbols-outlined text-lg animate-spin align-middle">
+                progress_activity
+              </span>
+            ) : saveSuccess ? (
+              <>
+                <span className="material-symbols-outlined text-base align-middle mr-1.5">check_circle</span>
+                Settings Saved
+              </>
+            ) : dirty ? (
+              <>
+                <span className="material-symbols-outlined text-base align-middle mr-1.5">save</span>
+                Save Changes
+              </>
+            ) : (
+              'All Changes Saved'
+            )}
+          </button>
         </motion.div>
 
         {/* Legacy Log */}

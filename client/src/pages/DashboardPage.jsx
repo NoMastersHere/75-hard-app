@@ -19,7 +19,7 @@ const fadeUp = {
 const TASKS = [
   { key: 'workout1', label: 'Workout 1 (outdoor)', icon: 'directions_run', type: 'exercise' },
   { key: 'workout2', label: 'Workout 2', icon: 'fitness_center', type: 'exercise' },
-  { key: 'water', label: 'Water intake', icon: 'water_drop', type: 'hydration', unit: 'cups', target: 16 },
+  { key: 'water', label: 'Water intake', icon: 'water_drop', type: 'hydration', unit: 'cups', target: 12 },
   { key: 'reading', label: 'Reading', icon: 'menu_book', type: 'learning', unit: 'pages', target: 10 },
   { key: 'photo', label: 'Progress picture', icon: 'photo_camera', type: 'tracking' },
   { key: 'diet', label: 'Diet compliance', icon: 'restaurant', type: 'nutrition' },
@@ -284,10 +284,14 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {TASKS.map((task, i) => {
               const c = completions[task.key] || {};
+              // Override water target with user's setting
+              const t = task.key === 'water'
+                ? { ...task, target: settings?.hydrationGoalCups || 12 }
+                : task;
               return (
                 <TaskCard
-                  key={task.key}
-                  task={task}
+                  key={t.key}
+                  task={t}
                   completed={!!c.completed}
                   value={c.value}
                   index={i + 4}

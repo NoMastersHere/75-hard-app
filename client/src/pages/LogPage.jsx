@@ -100,7 +100,7 @@ export default function LogPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const hydrationGoalCups = (settings?.hydrationGoal || 1) * 16; // 1 gallon = 16 cups
+  const hydrationGoalCups = settings?.hydrationGoalCups || 12;
   const readingGoal = settings?.readingGoal || 10;
   const waterComplete = waterCups >= hydrationGoalCups;
   const readingComplete = pagesRead >= readingGoal;

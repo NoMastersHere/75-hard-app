@@ -32,7 +32,7 @@ router.put('/', async (req, res, next) => {
     const {
       challengeDays,
       workoutDuration,
-      hydrationGoal,
+      hydrationGoalCups,
       readingGoal,
       dietConstraint,
       reminderTasks,
@@ -43,7 +43,7 @@ router.put('/', async (req, res, next) => {
     const data = {};
     if (challengeDays !== undefined) data.challengeDays = Math.min(365, Math.max(1, parseInt(challengeDays, 10)));
     if (workoutDuration !== undefined) data.workoutDuration = parseInt(workoutDuration, 10);
-    if (hydrationGoal !== undefined) data.hydrationGoal = parseFloat(hydrationGoal);
+    if (hydrationGoalCups !== undefined) data.hydrationGoalCups = Math.min(64, Math.max(1, parseInt(hydrationGoalCups, 10)));
     if (readingGoal !== undefined) data.readingGoal = parseInt(readingGoal, 10);
     if (dietConstraint !== undefined) data.dietConstraint = dietConstraint || null;
     if (reminderTasks !== undefined) data.reminderTasks = !!reminderTasks;
