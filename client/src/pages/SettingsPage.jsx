@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import useAuthStore from '../store/authStore';
 import useSettingsStore from '../store/settingsStore';
 import useChallengeStore from '../store/challengeStore';
+import api from '../api/client';
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -83,6 +84,8 @@ export default function SettingsPage() {
   const [notifTasks, setNotifTasks] = useState(true);
   const [notifHydration, setNotifHydration] = useState(true);
   const [notifPhoto, setNotifPhoto] = useState(false);
+
+  const [activeTab, setActiveTab] = useState('protocol');
 
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetDone, setResetDone] = useState(false);
@@ -218,6 +221,35 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
+        {/* Tab Navigation */}
+        <motion.div variants={fadeUp} className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab('protocol')}
+            className={`flex-1 py-3 rounded-lg font-display font-bold text-sm uppercase tracking-wider transition-all ${
+              activeTab === 'protocol'
+                ? 'bg-primary text-bg'
+                : 'bg-surface-higher text-on-surface-variant border border-outline/30 hover:border-primary/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base align-middle mr-1.5">tune</span>
+            Protocol
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('account')}
+            className={`flex-1 py-3 rounded-lg font-display font-bold text-sm uppercase tracking-wider transition-all ${
+              activeTab === 'account'
+                ? 'bg-primary text-bg'
+                : 'bg-surface-higher text-on-surface-variant border border-outline/30 hover:border-primary/40'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base align-middle mr-1.5">person</span>
+            Account
+          </button>
+        </motion.div>
+
+        {activeTab === 'protocol' && (<>
         {/* Protocol Configuration */}
         <motion.div variants={fadeUp} className="glass-panel rounded-xl p-5 border border-outline/15 space-y-5">
           <SectionLabel>protocol configuration</SectionLabel>
@@ -468,7 +500,167 @@ export default function SettingsPage() {
             Disconnect
           </button>
         </motion.div>
+        </>)}
+
+        {activeTab === 'account' && (
+          <AccountSettings />
+        )}
       </motion.div>
     </Layout>
+  );
+}
+
+function AccountSettings() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setFeedback(null);
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setFeedback({ type: 'error', message: 'All fields are required.' });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setFeedback({ type: 'error', message: 'New password must be at least 8 characters.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setFeedback({ type: 'error', message: 'New passwords do not match.' });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.post('/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      setFeedback({ type: 'success', message: 'Password changed successfully.' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Failed to change password.';
+      setFeedback({ type: 'error', message: msg });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <motion.div variants={fadeUp} className="glass-panel rounded-xl p-5 border border-outline/15 space-y-5">
+        <SectionLabel>change password</SectionLabel>
+
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          {/* Current Password */}
+          <div>
+            <label className="text-on-surface text-sm font-semibold block mb-1.5">
+              Current Password
+            </label>
+            <div className="relative">
+              <input
+                type={showCurrent ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+                className="w-full bg-surface-higher border border-outline/30 rounded-lg px-4 py-3 pr-12 text-on-surface text-sm placeholder:text-outline/50 focus:border-primary/50 focus:outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(!showCurrent)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showCurrent ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* New Password */}
+          <div>
+            <label className="text-on-surface text-sm font-semibold block mb-1.5">
+              New Password
+            </label>
+            <div className="relative">
+              <input
+                type={showNew ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Min 8 characters"
+                className="w-full bg-surface-higher border border-outline/30 rounded-lg px-4 py-3 pr-12 text-on-surface text-sm placeholder:text-outline/50 focus:border-primary/50 focus:outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showNew ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm New Password */}
+          <div>
+            <label className="text-on-surface text-sm font-semibold block mb-1.5">
+              Confirm New Password
+            </label>
+            <input
+              type={showNew ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="w-full bg-surface-higher border border-outline/30 rounded-lg px-4 py-3 text-on-surface text-sm placeholder:text-outline/50 focus:border-primary/50 focus:outline-none transition-colors"
+            />
+          </div>
+
+          {/* Feedback */}
+          <AnimatePresence>
+            {feedback && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`flex items-center gap-2 text-sm rounded-lg px-4 py-3 ${
+                  feedback.type === 'success'
+                    ? 'bg-primary/10 text-primary-container'
+                    : 'bg-error/10 text-error'
+                }`}
+              >
+                <span className="material-symbols-outlined text-base">
+                  {feedback.type === 'success' ? 'check_circle' : 'error'}
+                </span>
+                {feedback.message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full py-3 rounded-lg bg-primary text-bg font-display font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? (
+              <span className="material-symbols-outlined text-bg text-lg animate-spin">
+                progress_activity
+              </span>
+            ) : (
+              'Update Password'
+            )}
+          </button>
+        </form>
+      </motion.div>
+    </>
   );
 }
