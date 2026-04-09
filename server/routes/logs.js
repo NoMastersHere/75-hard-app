@@ -178,4 +178,46 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
+// GET /challenges/:challengeId/log/books - aggregate reading stats by book
+router.get('/books', async (req, res, next) => {
+  try {
+    const challenge = await getChallenge(req.params.challengeId, req.user.id);
+    if (!challenge) {
+      return res.status(404).json({ success: false, error: 'Challenge not found' });
+    }
+
+    const logs = await prisma.dayLog.findMany({
+      where: {
+        challengeId: challenge.id,
+        bookTitle: { not: null },
+        pagesRead: { gt: 0 },
+      },
+      orderBy: { date: 'asc' },
+      select: { bookTitle: true, pagesRead: true, date: true, dayNumber: true },
+    });
+
+    // Aggregate pages per book
+    const bookMap = {};
+    logs.forEach((log) => {
+      const title = log.bookTitle.trim();
+      if (!title) return;
+      if (!bookMap[title]) {
+        bookMap[title] = { title, totalPages: 0, sessions: 0, firstRead: log.date, lastRead: log.date };
+      }
+      bookMap[title].totalPages += log.pagesRead;
+      bookMap[title].sessions += 1;
+      bookMap[title].lastRead = log.date;
+    });
+
+    const books = Object.values(bookMap).sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead));
+
+    // Distinct titles for autocomplete
+    const titles = books.map((b) => b.title);
+
+    res.json({ success: true, data: { books, titles } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

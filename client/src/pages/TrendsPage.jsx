@@ -65,6 +65,7 @@ export default function TrendsPage() {
   const { challenge, challenges, fetchChallenges, isLoading } = useChallengeStore();
   const [logs, setLogs] = useState([]);
   const [allLogs, setAllLogs] = useState([]);
+  const [books, setBooks] = useState([]);
 
   const activeChallenge = challenge || challenges?.find((c) => c.status === 'active');
 
@@ -78,6 +79,10 @@ export default function TrendsPage() {
         const fetched = data.data || [];
         setLogs(fetched);
         setAllLogs(fetched);
+      }).catch(() => {});
+
+      api.get(`/challenges/${activeChallenge.id}/log/books`).then(({ data }) => {
+        setBooks(data.data?.books || []);
       }).catch(() => {});
     }
   }, [activeChallenge?.id]);
@@ -103,8 +108,7 @@ export default function TrendsPage() {
     0
   );
   const totalPages = allLogs.reduce((sum, l) => sum + (l.pagesRead || 0), 0);
-  const totalWaterOz = allLogs.reduce((sum, l) => sum + (l.waterIntake || 0), 0);
-  const totalWaterGallons = (totalWaterOz / 128).toFixed(1);
+  const totalWaterCups = allLogs.reduce((sum, l) => sum + (l.waterIntake || 0), 0);
   const completionRate =
     allLogs.length > 0 ? Math.round((completedDays / allLogs.length) * 100) : 0;
 
@@ -320,11 +324,71 @@ export default function TrendsPage() {
           )}
         </motion.div>
 
+        {/* Intelligence — Reading Log */}
+        <motion.div variants={fadeUp} className="glass-panel rounded-xl p-5 border border-outline/15">
+          <p className="label-text text-on-surface-variant mb-4">intelligence</p>
+
+          {books.length > 0 ? (
+            <div className="space-y-3">
+              {books.map((book, i) => {
+                const avgPages = book.sessions > 0 ? Math.round(book.totalPages / book.sessions) : 0;
+                return (
+                  <div
+                    key={i}
+                    className="bg-surface-higher rounded-lg p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-on-surface text-sm font-semibold truncate">
+                          {book.title}
+                        </p>
+                        <p className="text-on-surface-variant text-xs mt-1">
+                          {book.sessions} {book.sessions === 1 ? 'session' : 'sessions'} &middot; ~{avgPages} pg/session
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-display font-black text-xl text-primary-container leading-none">
+                          {book.totalPages}
+                        </p>
+                        <p className="text-on-surface-variant text-[10px] uppercase tracking-wider mt-1">pages</p>
+                      </div>
+                    </div>
+
+                    {/* Mini progress bar */}
+                    <div className="mt-3 h-[3px] bg-surface-highest rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ background: 'linear-gradient(90deg, #f4ffc6, #d1fc00)' }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((book.totalPages / Math.max(...books.map(b => b.totalPages))) * 100, 100)}%` }}
+                        transition={{ duration: 0.6, delay: i * 0.1 }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center justify-between pt-2 border-t border-outline/15">
+                <span className="text-on-surface-variant text-xs uppercase tracking-wider">Total across all books</span>
+                <span className="font-display font-bold text-primary text-sm">
+                  {books.reduce((sum, b) => sum + b.totalPages, 0)} pages
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-6 text-on-surface-variant">
+              <span className="material-symbols-outlined text-3xl mb-2">menu_book</span>
+              <p className="text-sm">No books logged yet</p>
+              <p className="text-xs mt-1">Add a book title when logging your daily reading</p>
+            </div>
+          )}
+        </motion.div>
+
         {/* Stats Grid */}
         <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
           <StatCard label="workouts" value={totalWorkouts} icon="fitness_center" color="#ff734a" />
           <StatCard label="pages read" value={totalPages} icon="menu_book" color="#f4ffc6" />
-          <StatCard label="water (gal)" value={totalWaterGallons} icon="water_drop" color="#81ecff" />
+          <StatCard label="water (cups)" value={totalWaterCups} icon="water_drop" color="#81ecff" />
           <StatCard label="completion" value={`${completionRate}%`} icon="verified" color="#d1fc00" />
         </motion.div>
 

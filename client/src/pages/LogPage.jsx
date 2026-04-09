@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/Layout';
 import useChallengeStore from '../store/challengeStore';
 import useSettingsStore from '../store/settingsStore';
+import api from '../api/client';
 
 const WORKOUT_TYPES = ['OUTDOOR', 'INDOOR', 'GYM'];
 
@@ -90,6 +91,9 @@ export default function LogPage() {
 
   const [bookTitle, setBookTitle] = useState('');
   const [pagesRead, setPagesRead] = useState(0);
+  const [savedBooks, setSavedBooks] = useState([]);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const bookInputRef = useRef(null);
 
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -107,10 +111,13 @@ export default function LogPage() {
 
   const dayNumber = activeChallenge?.currentDay || dayLog?.dayNumber || 1;
 
-  // Load existing log on mount
+  // Load existing log and saved books on mount
   useEffect(() => {
     if (activeChallenge?.id) {
       fetchTodayLog(activeChallenge.id).catch(() => {});
+      api.get(`/challenges/${activeChallenge.id}/log/books`)
+        .then(({ data }) => setSavedBooks(data.data?.titles || []))
+        .catch(() => {});
     }
   }, [activeChallenge?.id, fetchTodayLog]);
 
@@ -329,24 +336,77 @@ export default function LogPage() {
         {/* Reading / Intelligence */}
         <motion.div
           variants={fadeUp}
-          className="glass-panel rounded-xl p-5 border border-outline/15"
+          className="glass-panel rounded-xl p-5 border border-outline/15 space-y-4"
         >
           <SectionLabel>intelligence</SectionLabel>
-          <input
-            type="text"
-            value={bookTitle}
-            onChange={(e) => setBookTitle(e.target.value)}
-            placeholder="Book title"
-            className="w-full bg-surface-higher border border-outline/30 rounded-lg px-4 py-3 text-on-surface text-sm font-body placeholder:text-outline focus:outline-none focus:border-primary/50 transition-colors mb-4"
-          />
+
+          {/* Book selector with autocomplete */}
+          <div className="relative" ref={bookInputRef}>
+            <label className="text-on-surface text-sm font-semibold block mb-1.5">
+              What are you reading?
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={bookTitle}
+                onChange={(e) => {
+                  setBookTitle(e.target.value);
+                  setShowBookDropdown(true);
+                }}
+                onFocus={() => setShowBookDropdown(true)}
+                onBlur={() => setTimeout(() => setShowBookDropdown(false), 200)}
+                placeholder="Type a book title or select a previous one"
+                className="w-full bg-surface-higher border border-outline/30 rounded-lg px-4 py-3 pr-10 text-on-surface text-sm font-body placeholder:text-outline focus:outline-none focus:border-primary/50 transition-colors"
+              />
+              <span className="material-symbols-outlined text-on-surface-variant text-lg absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                menu_book
+              </span>
+            </div>
+
+            {/* Dropdown of saved books */}
+            <AnimatePresence>
+              {showBookDropdown && savedBooks.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface-higher border border-outline/30 rounded-lg overflow-hidden shadow-lg max-h-48 overflow-y-auto"
+                >
+                  {savedBooks
+                    .filter((t) => !bookTitle || t.toLowerCase().includes(bookTitle.toLowerCase()))
+                    .map((title) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setBookTitle(title);
+                          setShowBookDropdown(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-primary/10 ${
+                          bookTitle === title ? 'text-primary font-semibold' : 'text-on-surface'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-sm align-middle mr-2 text-on-surface-variant">
+                          bookmark
+                        </span>
+                        {title}
+                      </button>
+                    ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Pages stepper */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-on-surface-variant text-sm">Pages read</span>
+              <span className="text-on-surface text-sm font-semibold">Pages read today</span>
               {readingComplete && (
                 <span className="text-primary-container text-xs font-semibold ml-2">Goal reached</span>
               )}
             </div>
-            <Stepper value={pagesRead} onChange={setPagesRead} min={0} max={500} step={1} />
+            <Stepper value={pagesRead} onChange={setPagesRead} min={0} max={500} step={5} />
           </div>
         </motion.div>
 
