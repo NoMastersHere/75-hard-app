@@ -22,10 +22,13 @@ FROM node:22.14-slim
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 # Copy built client and server
 COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 3000
 

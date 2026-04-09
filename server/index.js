@@ -8,11 +8,7 @@ const path = require('path');
 
 console.log('JWT_SECRET defined:', !!process.env.JWT_SECRET);
 console.log('NODE_ENV:', process.env.NODE_ENV);
-
-const authRoutes = require('./routes/auth');
-const challengeRoutes = require('./routes/challenges');
-const logRoutes = require('./routes/logs');
-const settingsRoutes = require('./routes/settings');
+console.log('DATABASE_URL defined:', !!process.env.DATABASE_URL);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -30,15 +26,29 @@ app.use(cookieParser());
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/challenges', challengeRoutes);
-app.use('/challenges/:challengeId/log', logRoutes);
-app.use('/settings', settingsRoutes);
-
+// Health check (before routes so it always works)
 app.get('/health', (req, res) => {
   res.json({ success: true, data: { status: 'ok' } });
 });
+
+// Routes — wrapped in try/catch so failures are logged, not silent
+const routeModules = [
+  { path: '/auth', module: './routes/auth' },
+  { path: '/challenges', module: './routes/challenges' },
+  { path: '/challenges/:challengeId/log', module: './routes/logs' },
+  { path: '/settings', module: './routes/settings' },
+];
+
+for (const route of routeModules) {
+  try {
+    const router = require(route.module);
+    app.use(route.path, router);
+    console.log(`Route loaded: ${route.path}`);
+  } catch (err) {
+    console.error(`FAILED to load route ${route.path} (${route.module}):`, err.message);
+    console.error(err.stack);
+  }
+}
 
 // Serve client build in production
 const clientDistPath = path.join(__dirname, '..', 'client', 'dist');

@@ -85,6 +85,12 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-on-surface-variant text-sm mt-6">
+          <Link to="/forgot-password" className="text-primary hover:text-primary-container transition-colors">
+            Forgot password?
+          </Link>
+        </p>
+
+        <p className="text-center text-on-surface-variant text-sm mt-3">
           New operator?{' '}
           <Link to="/signup" className="text-primary hover:text-primary-container transition-colors">
             Join the protocol

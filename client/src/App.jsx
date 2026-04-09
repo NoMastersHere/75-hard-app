@@ -8,6 +8,8 @@ import LandingPage from './pages/LandingPage';
 import LogPage from './pages/LogPage';
 import TrendsPage from './pages/TrendsPage';
 import SettingsPage from './pages/SettingsPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 function ProtectedRoute({ children }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -44,6 +46,8 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected routes */}
         <Route

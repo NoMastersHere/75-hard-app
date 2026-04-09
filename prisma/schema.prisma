@@ -8,16 +8,18 @@ datasource db {
 }
 
 model User {
-  id          String        @id @default(cuid())
-  email       String        @unique
-  password    String
-  name        String?
-  displayName String?
-  avatarUrl   String?
-  createdAt   DateTime      @default(now())
-  challenges  Challenge[]
-  dayLogs     DayLog[]
-  settings    UserSettings?
+  id                   String        @id @default(cuid())
+  email                String        @unique
+  password             String
+  name                 String?
+  displayName          String?
+  avatarUrl            String?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  createdAt            DateTime      @default(now())
+  challenges           Challenge[]
+  dayLogs              DayLog[]
+  settings             UserSettings?
 }
 
 model Challenge {
