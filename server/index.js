@@ -1,9 +1,13 @@
-require('dotenv').config();
-require('dotenv').config({ path: '../.env' });
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+
+console.log('JWT_SECRET defined:', !!process.env.JWT_SECRET);
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
 const authRoutes = require('./routes/auth');
 const challengeRoutes = require('./routes/challenges');
