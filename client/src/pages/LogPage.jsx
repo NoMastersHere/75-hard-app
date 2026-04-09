@@ -86,7 +86,7 @@ export default function LogPage() {
   const [workout2Notes, setWorkout2Notes] = useState('');
   const [workout2Complete, setWorkout2Complete] = useState(false);
 
-  const [waterOz, setWaterOz] = useState(0);
+  const [waterCups, setWaterCups] = useState(0);
 
   const [bookTitle, setBookTitle] = useState('');
   const [pagesRead, setPagesRead] = useState(0);
@@ -100,9 +100,9 @@ export default function LogPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  const hydrationGoal = (settings?.hydrationGoal || 1) * 128;
+  const hydrationGoalCups = (settings?.hydrationGoal || 1) * 16; // 1 gallon = 16 cups
   const readingGoal = settings?.readingGoal || 10;
-  const waterComplete = waterOz >= hydrationGoal;
+  const waterComplete = waterCups >= hydrationGoalCups;
   const readingComplete = pagesRead >= readingGoal;
 
   const dayNumber = activeChallenge?.currentDay || dayLog?.dayNumber || 1;
@@ -125,7 +125,7 @@ export default function LogPage() {
     if (dayLog.workout2Duration) setWorkout2Duration(dayLog.workout2Duration);
     if (dayLog.workout2Notes) setWorkout2Notes(dayLog.workout2Notes);
     if (dayLog.workout2Complete) setWorkout2Complete(true);
-    if (dayLog.waterIntake) setWaterOz(dayLog.waterIntake);
+    if (dayLog.waterIntake) setWaterCups(dayLog.waterIntake);
     if (dayLog.bookTitle) setBookTitle(dayLog.bookTitle);
     if (dayLog.pagesRead) setPagesRead(dayLog.pagesRead);
     if (dayLog.dietCompliant) { setDietCompliant(true); setZeroAlcohol(true); }
@@ -141,8 +141,8 @@ export default function LogPage() {
     reader.readAsDataURL(file);
   }, []);
 
-  const addWater = useCallback((oz) => {
-    setWaterOz((prev) => Math.min(prev + oz, 256));
+  const adjustWater = useCallback((amount) => {
+    setWaterCups((prev) => Math.max(0, Math.min(prev + amount, 32)));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -162,7 +162,7 @@ export default function LogPage() {
       workout2Duration,
       workout2Notes,
       workout2Complete,
-      waterIntake: waterOz,
+      waterIntake: waterCups,
       waterComplete,
       bookTitle,
       pagesRead,
@@ -293,9 +293,9 @@ export default function LogPage() {
             <span className="material-symbols-outlined text-tertiary text-4xl">water_drop</span>
             <div>
               <p className="font-display font-black text-2xl text-on-surface">
-                {waterOz}
+                {waterCups}
                 <span className="text-on-surface-variant text-sm font-body font-normal ml-1">
-                  / {hydrationGoal} oz
+                  / {hydrationGoalCups} cups
                 </span>
               </p>
               {waterComplete && (
@@ -308,14 +308,19 @@ export default function LogPage() {
             <motion.div
               className="h-full rounded-full bg-primary"
               initial={{ width: 0 }}
-              animate={{ width: `${Math.min((waterOz / hydrationGoal) * 100, 100)}%` }}
+              animate={{ width: `${Math.min((waterCups / hydrationGoalCups) * 100, 100)}%` }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />
           </div>
-          <div className="flex gap-2">
-            {[8, 16, 32].map((oz) => (
-              <PillButton key={oz} active={false} onClick={() => addWater(oz)}>
-                +{oz}oz
+          <div className="flex gap-2 flex-wrap">
+            {[1, 2, 4].map((cups) => (
+              <PillButton key={`minus-${cups}`} active={false} onClick={() => adjustWater(-cups)}>
+                -{cups}
+              </PillButton>
+            ))}
+            {[1, 2, 4].map((cups) => (
+              <PillButton key={`plus-${cups}`} active={false} onClick={() => adjustWater(cups)}>
+                +{cups}
               </PillButton>
             ))}
           </div>

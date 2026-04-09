@@ -74,6 +74,7 @@ export default function SettingsPage() {
   const { challenges, fetchChallenges, challenge, resetChallenge, isLoading } = useChallengeStore();
 
   // Local settings state
+  const [challengeDays, setChallengeDays] = useState(75);
   const [workoutDuration, setWorkoutDuration] = useState(45);
   const [hydrationGoal, setHydrationGoal] = useState(1);
   const [readingPages, setReadingPages] = useState(10);
@@ -97,6 +98,7 @@ export default function SettingsPage() {
   // Populate from fetched settings
   useEffect(() => {
     if (!settings) return;
+    if (settings.challengeDays != null) setChallengeDays(settings.challengeDays);
     if (settings.workoutDuration != null) setWorkoutDuration(settings.workoutDuration);
     if (settings.hydrationGoal != null) setHydrationGoal(settings.hydrationGoal);
     if (settings.readingGoal != null) setReadingPages(settings.readingGoal);
@@ -117,6 +119,10 @@ export default function SettingsPage() {
     [updateSettings]
   );
 
+  const handleChallengeDays = (v) => {
+    setChallengeDays(v);
+    autoSave({ challengeDays: v });
+  };
   const handleWorkoutDuration = (v) => {
     setWorkoutDuration(v);
     autoSave({ workoutDuration: v });
@@ -215,6 +221,22 @@ export default function SettingsPage() {
         {/* Protocol Configuration */}
         <motion.div variants={fadeUp} className="glass-panel rounded-xl p-5 border border-outline/15 space-y-5">
           <SectionLabel>protocol configuration</SectionLabel>
+
+          {/* Challenge Days */}
+          <div className="bg-surface-higher rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <p className="text-on-surface text-sm font-semibold">Challenge Length</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Total days in your challenge</p>
+            </div>
+            <Stepper
+              value={challengeDays}
+              onChange={handleChallengeDays}
+              min={7}
+              max={365}
+              step={1}
+              unit="days"
+            />
+          </div>
 
           {/* Workout Duration */}
           <div className="bg-surface-higher rounded-lg p-4 flex items-center justify-between">

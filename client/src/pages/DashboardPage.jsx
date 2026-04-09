@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import ProgressRing from '../components/ProgressRing';
 import StatCard from '../components/StatCard';
 import useChallengeStore from '../store/challengeStore';
+import useSettingsStore from '../store/settingsStore';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -18,7 +19,7 @@ const fadeUp = {
 const TASKS = [
   { key: 'workout1', label: 'Workout 1 (outdoor)', icon: 'directions_run', type: 'exercise' },
   { key: 'workout2', label: 'Workout 2', icon: 'fitness_center', type: 'exercise' },
-  { key: 'water', label: 'Water intake', icon: 'water_drop', type: 'hydration', unit: 'oz', target: 128 },
+  { key: 'water', label: 'Water intake', icon: 'water_drop', type: 'hydration', unit: 'cups', target: 16 },
   { key: 'reading', label: 'Reading', icon: 'menu_book', type: 'learning', unit: 'pages', target: 10 },
   { key: 'photo', label: 'Progress picture', icon: 'photo_camera', type: 'tracking' },
   { key: 'diet', label: 'Diet compliance', icon: 'restaurant', type: 'nutrition' },
@@ -152,10 +153,12 @@ export default function DashboardPage() {
     fetchTodayLog,
     createChallenge,
   } = useChallengeStore();
+  const { settings, fetchSettings } = useSettingsStore();
 
   useEffect(() => {
     fetchChallenges();
-  }, [fetchChallenges]);
+    fetchSettings().catch(() => {});
+  }, [fetchChallenges, fetchSettings]);
 
   // Find active challenge
   const activeChallenge = challenge || challenges?.find((c) => c.status === 'active');
@@ -167,7 +170,7 @@ export default function DashboardPage() {
   }, [activeChallenge?.id, fetchTodayLog]);
 
   const dayNumber = activeChallenge?.currentDay || 1;
-  const totalDays = 75;
+  const totalDays = settings?.challengeDays || 75;
   const completedDays = activeChallenge?.completedDays || 0;
   const percentage = Math.round((completedDays / totalDays) * 100);
   const streak = completedDays; // simplified streak = completed days
@@ -198,7 +201,7 @@ export default function DashboardPage() {
   if (!isLoading && !activeChallenge) {
     return (
       <Layout>
-        <LandingHero onStart={handleStartProtocol} isLoading={isLoading} />
+        <LandingHero onStart={handleStartProtocol} isLoading={isLoading} totalDays={totalDays} />
       </Layout>
     );
   }
@@ -228,12 +231,15 @@ export default function DashboardPage() {
             transition={{ delay: 0.2, duration: 0.6, ease: 'easeOut' }}
           >
             <div className="relative inline-flex items-center justify-center">
-              <ProgressRing percentage={percentage} size={180} strokeWidth={8} />
-              <div className="absolute flex flex-col items-center">
-                <span className="font-display font-black text-primary text-4xl leading-none">
+              <ProgressRing percentage={percentage} size={180} strokeWidth={8} showLabel={false} />
+              <div className="absolute flex flex-col items-center leading-tight">
+                <span className="font-display font-black text-primary text-lg leading-none">
                   DAY {dayNumber}
                 </span>
-                <span className="text-on-surface-variant text-sm mt-1">/{totalDays}</span>
+                <span className="font-display font-black text-primary text-3xl leading-none mt-0.5">
+                  {Math.round(percentage)}%
+                </span>
+                <span className="text-on-surface-variant text-xs mt-0.5">/{totalDays}</span>
               </div>
             </div>
           </motion.div>
@@ -346,7 +352,7 @@ export default function DashboardPage() {
 }
 
 /* Inline landing hero for when no active challenge exists */
-function LandingHero({ onStart, isLoading }) {
+function LandingHero({ onStart, isLoading, totalDays = 75 }) {
   return (
     <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
@@ -356,11 +362,11 @@ function LandingHero({ onStart, isLoading }) {
           <span className="text-primary italic">course.</span>
         </h1>
         <p className="text-on-surface-variant mt-4 text-sm max-w-xs mx-auto">
-          75 days. No shortcuts. No excuses. Define your rules and execute.
+          No shortcuts. No excuses. Define your rules and execute.
         </p>
 
         <div className="mt-8 font-display font-black text-primary text-6xl md:text-8xl">
-          DAY 0 <span className="text-on-surface-variant text-2xl md:text-3xl">/ 75</span>
+          DAY 0 <span className="text-on-surface-variant text-2xl md:text-3xl">/ {totalDays}</span>
         </div>
 
         <button

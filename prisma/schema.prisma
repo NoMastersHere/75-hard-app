@@ -69,6 +69,7 @@ model DayLog {
 model UserSettings {
   id                String  @id @default(cuid())
   userId            String  @unique
+  challengeDays     Int     @default(75)
   workoutDuration   Int     @default(45)
   hydrationGoal     Float   @default(1.0)
   readingGoal       Int     @default(10)

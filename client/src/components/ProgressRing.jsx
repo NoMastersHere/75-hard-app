@@ -1,4 +1,4 @@
-export default function ProgressRing({ percentage = 0, size = 120, strokeWidth = 6 }) {
+export default function ProgressRing({ percentage = 0, size = 120, strokeWidth = 6, showLabel = true }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
@@ -32,12 +32,14 @@ export default function ProgressRing({ percentage = 0, size = 120, strokeWidth =
         />
       </svg>
 
-      <span
-        className="absolute font-display font-black text-primary"
-        style={{ fontSize: size * 0.22 }}
-      >
-        {Math.round(percentage)}%
-      </span>
+      {showLabel && (
+        <span
+          className="absolute font-display font-black text-primary"
+          style={{ fontSize: size * 0.22 }}
+        >
+          {Math.round(percentage)}%
+        </span>
+      )}
     </div>
   );
 }
